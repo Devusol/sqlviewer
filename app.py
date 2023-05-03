@@ -149,7 +149,7 @@ def tulip_post():
 @app.route("/")
 def index():
     # return "Hello from index route"
-    return render_template('index.html')
+    return redirect('https://whitechapelcemetery.com/tulip-festival.php')
 
 
 if __name__ == "__main__":
