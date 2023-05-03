@@ -106,14 +106,14 @@ def get_node_children(session, node_uri):
 
 def upload_image(image_paths):
     # _images = image_paths.split(",")
-    print(image_paths)
+    album = "/api/v2/album/3zqtgn" if (image_paths[0].split(
+        '/')[2] == "tulip") else "/api/v2/album/hBCb9n"
+    print("attempt to upload to smugmug", )
     session = OAuth1Session("cP8LhDrDHDBPNTTNznSW8jgQpRhQmK5z",
                             client_secret="7g35HLJ4PdhJGRLg44SkC2mSmFWfDH5z9CWSG64jTFT3cBvMJpjCNZHFhqg5d7Bs",
                             resource_owner_key="bL56zZRZnsVCBgdGD7MhvFzzH2xLJZk5",
                             resource_owner_secret="dT2HVv2PhQDvXgX9BTn7wR7tnvtVfghgZFDzVrJ32HNWC85gpVFnszQzvmw9h2jb"
                             )
-    # typePNG = "image/png"
-    # typeJPG = "image/jpeg"
 
     for image_path in image_paths:
         image_type = mimetypes.guess_type(image_path)[0]
@@ -131,7 +131,7 @@ def upload_image(image_paths):
                         'Content-Length': str(len(image_data)),
                         'Content-MD5': hashlib.md5(image_data).hexdigest(),
                         'Content-Type': image_type,
-                        'X-Smug-AlbumUri': "/api/v2/album/3zqtgn",
+                        'X-Smug-AlbumUri': album,
                         'X-Smug-FileName': os.path.basename(image_path),
                         'X-Smug-ResponseType': 'JSON',
                         'X-Smug-Version': 'v2',
@@ -150,4 +150,5 @@ def upload_image(image_paths):
         else:
             # TODO: increase failure handling. Upload error codes aren't great.
             print(f'[WARN] Upload Failed: "{image_path}"')
-        return r
+
+    return r

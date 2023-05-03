@@ -10,6 +10,7 @@ from email.message import EmailMessage
 #     msg = EmailMessage()
 #     msg.set_content(fp.read())
 
+
 def sendIt(message):
     msg = EmailMessage()
     msg.set_content(message)
@@ -21,6 +22,11 @@ def sendIt(message):
 
     # Send the message via our own SMTP server.
     s = smtplib.SMTP('localhost')
-    s.send_message(msg)
-    s.quit()
+    try:
+        s.send_message(msg)
+        s.quit()
+        print("Email sent successful")
+    except Exception as e:
+        print("Email send failed Error: ", e)
+    
     return

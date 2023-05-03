@@ -1,18 +1,21 @@
 import datetime
 import smugmug
+import threading
 import emailer
 from flask import Flask, render_template, request, json, redirect
 from flaskext.mysql import MySQL
 from werkzeug.security import generate_password_hash
 
+
 mysql = MySQL()
+
 
 app = Flask(__name__)
 
 app.config['MYSQL_DATABASE_USER'] = 'devusol'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'Tulip_-Db'
 app.config['MYSQL_DATABASE_DB'] = 'tulip2023'
-app.config['MYSQL_DATABASE_HOST'] = 'localhost' #50.62.141.187'
+app.config['MYSQL_DATABASE_HOST'] = '50.62.141.187'
 app.config['MYSQL_USE_POOL'] = {
     # use = 0 no pool else use pool
     "use": 0,
@@ -66,13 +69,13 @@ def signup_post():
 @app.route('/api/tulip2023', methods=['POST'])
 def tulip_post():
     # print("tulip route is db connected? ", conn.open)
-
+    conn.ping(reconnect=True)
     # if not conn.open:
     #     conn = mysql.connect()
 
     cursor = conn.cursor()
 
-    # _contest = request.form['submissiontype']
+    _contest = request.form['categorytype']
     _firstname = request.form['fname']
     _lastname = request.form['lname']
     _email = request.form['email']
@@ -86,18 +89,20 @@ def tulip_post():
     _filenames = ""
     _filepaths = []
 
+    print(_contest)
+
     for file in _files:
         x = datetime.datetime.now()
         print(x.strftime("%m_%d_%H_%M"))
-        _filepath = f"./uploads/{_firstname}_{_lastname}_{x.strftime('%m_%d_%H_%M')}_{file.filename}"
+        _filepath = f"./uploads/{_contest}/{_firstname}_{_lastname}_{x.strftime('%m_%d_%H_%M')}_{file.filename}"
         _filenames += (f"{file.filename}, ")
         _filepaths.append(_filepath)
         file.save(_filepath)
         # print(_filenames)
 
-    sql = "INSERT INTO ContestEntries (firstname, lastname, email, phone, address1, address2, city, state, zip,  files) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+    sql = "INSERT INTO ContestEntries (firstname, lastname, email, phone, address1, address2, city, state, zip, contest, files) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
     val = (_firstname, _lastname, _email, _phone,
-           _add1, _add2, _city, _state, _zip,  _filenames)
+           _add1, _add2, _city, _state, _zip, _contest, _filenames)
     cursor.execute(sql, val)
     conn.commit()
     # print(cursor.rowcount, "record inserted.")
@@ -109,10 +114,18 @@ def tulip_post():
             conn.commit()
             json.dumps({'message': 'User created successfully !'})
             cursor.close()
-            smugmug.upload_image(_filepaths)
-            emailer.sendIt(
-                f"Contestant: {_firstname}_{_lastname}\nPhotos submitted: {_filenames}")
+            
+            smugThread = threading.Thread(daemon=True, target=smugmug.upload_image, kwargs={
+                'image_paths': request.args.get('image_paths', _filepaths)})
+            emailThread = threading.Thread(daemon=True, target=emailer.sendIt, kwargs={
+                'message': request.args.get('message', f"Contestant: {_firstname}_{_lastname}\nPhotos submitted: {_filenames}")})
+            
+            emailThread.start()
+            smugThread.start()
+            # emailer.sendIt(
+            #     f"Contestant: {_firstname}_{_lastname}\nPhotos submitted: {_filenames}")
             return redirect('http://localhost:3000/tulip-contest.php')
+
         except Exception as e:
             print('Failed to commit to db: ' + e)
     else:
