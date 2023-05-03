@@ -15,18 +15,18 @@ def sendIt(message):
     msg = EmailMessage()
     msg.set_content(message)
     # me == the sender's email address
-    recipients = ["flexmethods@gmail.com", "sean.inbox@yahoo.com"]
+    recipients = ["flexmethods@gmail.com"]
     msg['Subject'] = "A new contestant entered the Tulip Contest"
     msg['From'] = "contest@whitechapelcemetery.com"
     msg['To'] = ", ".join(recipients)
 
     # Send the message via our own SMTP server.
-    s = smtplib.SMTP('localhost')
     try:
+        s = smtplib.SMTP('localhost')
         s.send_message(msg)
         s.quit()
         print("Email sent successful")
     except Exception as e:
         print("Email send failed Error: ", e)
-    
+
     return
