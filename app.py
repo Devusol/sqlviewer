@@ -1,15 +1,20 @@
 from flask import Flask, render_template, request, json
 from flaskext.mysql import MySQL
 from werkzeug.security import generate_password_hash
+from dotenv import load_dotenv
+import os
+load_dotenv('.env') 
+
+print(os.environ.get('MYSQL_DATABASE_USER'))
 
 mysql = MySQL()
 
 app = Flask(__name__)
 
-app.config['MYSQL_DATABASE_USER'] = 'root'
-app.config['MYSQL_DATABASE_PASSWORD'] = ''
-app.config['MYSQL_DATABASE_DB'] = 'users'
-app.config['MYSQL_DATABASE_HOST'] = 'localhost'
+app.config['MYSQL_DATABASE_USER'] = os.environ.get('MYSQL_DATABASE_USER')
+app.config['MYSQL_DATABASE_PASSWORD'] = os.environ.get('MYSQL_DATABASE_PASSWORD')
+app.config['MYSQL_DATABASE_DB'] = os.environ.get('MYSQL_DATABASE_DB')
+app.config['MYSQL_DATABASE_HOST'] = os.environ.get('MYSQL_DATABASE_HOST')
 mysql.init_app(app)
 
 conn = mysql.connect()
