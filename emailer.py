@@ -15,7 +15,7 @@ def sendIt(message):
     msg = EmailMessage()
     msg.set_content(message)
     # me == the sender's email address
-    recipients = ["flexmethods@gmail.com"]
+    recipients = ["flexmethods@gmail.com", "dstone@stonesimons.com"]
     msg['Subject'] = "A new contestant entered the Tulip Contest"
     msg['From'] = "contest@whitechapelcemetery.com"
     msg['To'] = ", ".join(recipients)
