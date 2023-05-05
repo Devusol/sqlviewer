@@ -2,7 +2,7 @@ import datetime
 import smugmug
 import threading
 import emailer
-from flask import Flask, render_template, request, json, redirect
+from flask import Flask, render_template, request, json, redirect, session, url_for
 from flaskext.mysql import MySQL
 from werkzeug.security import generate_password_hash
 
@@ -15,7 +15,7 @@ app = Flask(__name__)
 app.config['MYSQL_DATABASE_USER'] = 'devusol'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'Tulip_-Db'
 app.config['MYSQL_DATABASE_DB'] = 'tulip2023'
-app.config['MYSQL_DATABASE_HOST'] = '50.62.141.187' #'localhost'
+app.config['MYSQL_DATABASE_HOST'] = '50.62.141.187'  # 'localhost'
 app.config['MYSQL_USE_POOL'] = {
     # use = 0 no pool else use pool
     "use": 0,
@@ -24,6 +24,7 @@ app.config['MYSQL_USE_POOL'] = {
     # pool name
     "name": "local",
 }
+app.secret_key = 'F-JaNdRgUkXp2r5u8x/A?D(G+KbPeShV'
 mysql.init_app(app)
 
 conn = mysql.connect()
@@ -54,10 +55,16 @@ cursor.execute("CREATE TABLE IF NOT EXISTS BloomAlerts ( \
                 email VARCHAR(255)\
                 )")
 
+cursor.execute("CREATE TABLE IF NOT EXISTS Admins ( \
+                id INT AUTO_INCREMENT PRIMARY KEY, \
+                username VARCHAR(255), \
+                password VARCHAR(255) \
+                )")
+
 cursor.close()
 
 
-@app.route('/emailer')
+@app.route('/emailertest')
 def sendNotice():
     bod = "body"
     emailer.sendIt(f"text that goes into the {bod}")
@@ -67,7 +74,7 @@ def sendNotice():
 @app.route('/api/bloomalerts', methods=['POST'])
 def bloom_alert():
 
-    _redirect = 'https://whitechapelcemetery.com/tulip-thankyou.php'
+    _redirect = 'https://whitechapelcemetery.com/tulip-bloomthankyou.php'
     conn.ping(reconnect=True)
     cursor = conn.cursor()
 
@@ -107,8 +114,9 @@ def bloom_alert():
 def signup():
     return render_template("signup.html")
 
-@app.route('/login')
-def login():
+
+@app.route('/signin')
+def signin():
     return render_template("signin.html")
 
 
@@ -199,9 +207,54 @@ def tulip_post():
 
 
 @app.route("/")
-def index():
-    # return "Hello from index route"
-    return redirect('https://whitechapelcemetery.com/tulip-festival.php')
+# def index():
+#     # return "Hello from index route"
+#     return redirect('https://whitechapelcemetery.com/tulip-festival.php')
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    msg = ''
+    if request.method == 'POST' and 'uname' in request.form and 'pword' in request.form:
+        _username = request.form['uname']
+        _password = request.form['pword']
+        _selection = request.form['dbselect']
+
+        conn.ping(reconnect=True)
+        cursor = conn.cursor()
+
+        cursor.execute(
+            'SELECT * FROM Admins WHERE username = % s \
+            AND password = % s', (_username, _password))
+       
+        account = cursor.fetchone()
+
+        print(account[0])
+        if account:
+            print("found user")
+            session['loggedin'] = True
+            session['id'] = account[0]
+            session['username'] = account[1]
+            if _selection == 'bloom':
+                cursor.execute('SELECT * FROM `tulip2023`.`BloomAlerts` LIMIT 1000')
+            else:
+                cursor.execute('SELECT * FROM `tulip2023`.`ContestEntries` LIMIT 1000')
+            
+            _dbreturn = cursor.fetchall()
+            print(_dbreturn)
+            msg = _selection
+            return render_template('viewdb.html', msg=msg)
+        else:
+            msg = 'Incorrect username / password !'
+
+    return render_template('login.html', msg=msg)
+
+
+@app.route("/display")
+def display():
+    print("display route")
+    if 'loggedin' in session:
+
+        return render_template("display.html", account=account)
+    return redirect(url_for('login'))
 
 
 if __name__ == "__main__":
