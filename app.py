@@ -15,7 +15,7 @@ app = Flask(__name__)
 app.config['MYSQL_DATABASE_USER'] = 'devusol'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'Tulip_-Db'
 app.config['MYSQL_DATABASE_DB'] = 'tulip2023'
-app.config['MYSQL_DATABASE_HOST'] = '50.62.141.187'  # 'localhost'
+app.config['MYSQL_DATABASE_HOST'] = '50.62.141.187' #'localhost'
 app.config['MYSQL_USE_POOL'] = {
     # use = 0 no pool else use pool
     "use": 0,
@@ -45,6 +45,15 @@ cursor.execute("CREATE TABLE IF NOT EXISTS ContestEntries ( \
                 files TEXT, \
                 agreedTOS BIT \
                 )")
+
+cursor.execute("CREATE TABLE IF NOT EXISTS BloomAlerts ( \
+                id INT AUTO_INCREMENT PRIMARY KEY, \
+                timestamp DATETIME NULL DEFAULT CURRENT_TIMESTAMP(), \
+                firstname VARCHAR(255), \
+                lastname VARCHAR(255), \
+                email VARCHAR(255)\
+                )")
+
 cursor.close()
 
 
@@ -55,9 +64,52 @@ def sendNotice():
     return json.dumps({'message': 'Message sent!'})
 
 
+@app.route('/api/bloomalerts', methods=['POST'])
+def bloom_alert():
+
+    _redirect = 'https://whitechapelcemetery.com/tulip-thankyou.php'
+    conn.ping(reconnect=True)
+    cursor = conn.cursor()
+
+    _firstname = request.form['fname']
+    _lastname = request.form['lname']
+    _email = request.form['email']
+
+    sql = "INSERT INTO BloomAlerts (firstname, lastname, email) VALUES (%s, %s, %s)"
+    val = (_firstname, _lastname, _email)
+    cursor.execute(sql, val)
+    conn.commit()
+    # print(cursor.rowcount, "record inserted.")
+
+    data = cursor.fetchall()
+    # print(data)
+    if len(data) == 0:
+        try:
+            conn.commit()
+            json.dumps({'message': 'User created successfully !'})
+            cursor.close()
+
+            emailThread = threading.Thread(daemon=True, target=emailer.sendIt, kwargs={
+                'message': request.args.get('message', f"Bloom Alert Subscriber: {_firstname} {_lastname}\nEmail: {_email}")})
+
+            emailThread.start()
+            return redirect(_redirect)
+
+        except Exception as e:
+            print('Failed to commit to db: ' + e)
+            return redirect(_redirect)
+    else:
+        print('error: ', str(data[0]))
+        return redirect(_redirect)
+
+
 @app.route('/signup')
 def signup():
     return render_template("signup.html")
+
+@app.route('/login')
+def login():
+    return render_template("signin.html")
 
 
 @app.route('/api/signup', methods=['POST'])
@@ -83,7 +135,7 @@ def signup_post():
 
 @app.route('/api/tulip2023', methods=['POST'])
 def tulip_post():
-
+    _redirect = 'https://whitechapelcemetery.com/tulip-thankyou.php'
     conn.ping(reconnect=True)
     cursor = conn.cursor()
 
@@ -102,11 +154,11 @@ def tulip_post():
     _filepaths = []
     _agreed = 1 if request.form['agreed'] else 0
 
-    print(_agreed)
+    # print(_agreed)
 
     for file in _files:
         x = datetime.datetime.now()
-        print(x.strftime("%m_%d_%H_%M"))
+        # print(x.strftime("%m_%d_%H_%M"))
         _filepath = f"./uploads/{_contest}/{_firstname}_{_lastname}_{x.strftime('%m_%d_%H_%M')}_{file.filename}"
         _filenames += (f"{file.filename}, ")
         _filepaths.append(_filepath)
@@ -136,14 +188,14 @@ def tulip_post():
             emailThread.start()
             smugThread.start()
 
-            return redirect('https://whitechapelcemetery.com/tulip-thankyou.php')
+            return redirect(_redirect)
 
         except Exception as e:
             print('Failed to commit to db: ' + e)
-            return redirect('https://whitechapelcemetery.com/tulip-404.php')
+            return redirect(_redirect)
     else:
         print('error: ', str(data[0]))
-        return redirect('https://whitechapelcemetery.com/tulip-404.php')
+        return redirect(_redirect)
 
 
 @app.route("/")

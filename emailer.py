@@ -12,11 +12,14 @@ from email.message import EmailMessage
 
 
 def sendIt(message):
+    _subj = "New Bloom Alerts Subscriber" if message.split()[0] == "Bloom" else "A new contestant entered the Tulip Contest"
+
     msg = EmailMessage()
     msg.set_content(message)
     # me == the sender's email address
-    recipients = ["flexmethods@gmail.com", "dstone@stonesimons.com"]
-    msg['Subject'] = "A new contestant entered the Tulip Contest"
+    # recipients = ["flexmethods@gmail.com", "dstone@stonesimons.com"]
+    recipients = ["flexmethods@gmail.com"]
+    msg['Subject'] = _subj
     msg['From'] = "contest@whitechapelcemetery.com"
     msg['To'] = ", ".join(recipients)
 
