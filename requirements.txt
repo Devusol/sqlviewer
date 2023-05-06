@@ -13,7 +13,6 @@ Jinja2==3.1.2
 MarkupSafe==2.1.2
 mysql==0.0.3
 mysql-connector-python==8.0.33
-mysqlclient==2.1.1
 oauthlib==3.2.2
 protobuf==3.20.3
 pycodestyle==2.10.0
