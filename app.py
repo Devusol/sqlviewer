@@ -5,6 +5,7 @@ import emailer
 from flask import Flask, render_template, request, json, redirect, session, url_for
 from flaskext.mysql import MySQL
 from werkzeug.security import generate_password_hash
+import pymysql.cursors
 
 
 mysql = MySQL()
@@ -15,7 +16,8 @@ app = Flask(__name__)
 app.config['MYSQL_DATABASE_USER'] = 'devusol'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'Tulip_-Db'
 app.config['MYSQL_DATABASE_DB'] = 'tulip2023'
-app.config['MYSQL_DATABASE_HOST'] = 'mysql.devusol.net' #50.62.141.187'  # 'localhost'
+# '50.62.141.187'  # 'localhost'
+app.config['MYSQL_DATABASE_HOST'] = 'mysql.devusol.net'
 app.config['MYSQL_USE_POOL'] = {
     # use = 0 no pool else use pool
     "use": 0,
@@ -219,32 +221,34 @@ def login():
         _selection = request.form['dbselect']
 
         conn.ping(reconnect=True)
-        cursor = conn.cursor()
+        cursor = conn.cursor(cursor=pymysql.cursors.DictCursor)
 
         cursor.execute(
             'SELECT * FROM Admins WHERE username = % s \
             AND password = % s', (_username, _password))
-       
+
         account = cursor.fetchone()
 
-        print(account[0])
+        print(account)
         if account:
-            print("found user")
             session['loggedin'] = True
-            session['id'] = account[0]
-            session['username'] = account[1]
+            session['id'] = account['id']
+            session['username'] = account['username']
+
             if _selection == 'bloom':
-                cursor.execute('SELECT * FROM `tulip2023`.`BloomAlerts` LIMIT 1000')
+                cursor.execute('SELECT `timestamp`,  `firstname`,  `lastname`,  `email` FROM BloomAlerts')
             else:
-                cursor.execute('SELECT * FROM `tulip2023`.`ContestEntries` LIMIT 1000')
-            
+                cursor.execute('SELECT `timestamp`,  `firstname`,  `lastname`,  `email`,  `phone`,  `address1`,  `address2`,  `city`,  `state`,  `zip`,  `contest` FROM ContestEntries')
+
             _data = cursor.fetchall()
             print(_data)
-            msg = str(_data)
+            msg = json.loads(json.dumps(_data))
+            cursor.close()
             return render_template('viewdb.html', msg=msg)
         else:
             msg = 'Incorrect username / password !'
 
+        cursor.close()
     return render_template('login.html', msg=msg)
 
 
@@ -255,6 +259,14 @@ def display():
 
         # return render_template("display.html", account=account)
         return redirect(url_for('login'))
+
+
+@app.route('/logout')
+def logout():
+    session.pop('loggedin', None)
+    session.pop('id', None)
+    session.pop('username', None)
+    return redirect(url_for('login'))
 
 
 if __name__ == "__main__":
