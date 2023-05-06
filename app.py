@@ -16,8 +16,7 @@ app = Flask(__name__)
 app.config['MYSQL_DATABASE_USER'] = 'devusol'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'Tulip_-Db'
 app.config['MYSQL_DATABASE_DB'] = 'tulip2023'
-# '50.62.141.187'  # 'localhost'
-app.config['MYSQL_DATABASE_HOST'] = 'mysql.devusol.net'
+app.config['MYSQL_DATABASE_HOST'] = '50.62.141.187' # 'mysql.devusol.net'   # 'localhost'
 app.config['MYSQL_USE_POOL'] = {
     # use = 0 no pool else use pool
     "use": 0,

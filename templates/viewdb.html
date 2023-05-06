@@ -18,7 +18,8 @@
     </div>
     <div>
         <H1>GOT BACK FROM DB:</H1>
-        <a class="btn btn-lg btn-primary btn-block mt-3" href="{{url_for('logout')}}">Logout</a>
+        <a class="btn btn-lg btn-primary btn-block m-3" href="{{url_for('logout')}}">Logout</a>
+        <button class="btn btn-lg btn-primary btn-block m-3" id="download-csv">Download CSV</button>
         <div id="example-table"></div>
     </div>
 
@@ -48,7 +49,8 @@
             height: 205, // set height of table (in CSS or here), this enables the Virtual DOM and improves render speed dramatically (can be any valid css height value)
             data: msg_data, //assign data to table
             layout: "fitColumns", //fit columns to width of table (optional)
-            autoColumns: true
+            autoColumns: true,
+            movableColumns: true
             // columns: colNames,
             // columns: [ //Define Table Columns
             //     { title: "Name", field: "firstname", width: 150 },
@@ -59,9 +61,14 @@
         });
 
         //trigger an alert message when the row is clicked
-        table.on("rowClick", function (e, row) {
-            alert("Row " + row.getData().id + " Clicked!!!!");
+        // table.on("rowClick", function (e, row) {
+        //     alert("Row " + row.getData().id + " Clicked!!!!");
+        // });
+
+        document.querySelector("#download-csv").addEventListener("click", function () {
+            table.download("csv", "data.csv");
         });
+
     </script>
 
 </body>
