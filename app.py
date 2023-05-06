@@ -15,7 +15,7 @@ app = Flask(__name__)
 app.config['MYSQL_DATABASE_USER'] = 'devusol'
 app.config['MYSQL_DATABASE_PASSWORD'] = 'Tulip_-Db'
 app.config['MYSQL_DATABASE_DB'] = 'tulip2023'
-app.config['MYSQL_DATABASE_HOST'] = '50.62.141.187'  # 'localhost'
+app.config['MYSQL_DATABASE_HOST'] = 'mysql.devusol.net' #50.62.141.187'  # 'localhost'
 app.config['MYSQL_USE_POOL'] = {
     # use = 0 no pool else use pool
     "use": 0,
@@ -238,9 +238,9 @@ def login():
             else:
                 cursor.execute('SELECT * FROM `tulip2023`.`ContestEntries` LIMIT 1000')
             
-            _dbreturn = cursor.fetchall()
-            print(_dbreturn)
-            msg = _selection
+            _data = cursor.fetchall()
+            print(_data)
+            msg = str(_data)
             return render_template('viewdb.html', msg=msg)
         else:
             msg = 'Incorrect username / password !'
@@ -253,8 +253,8 @@ def display():
     print("display route")
     if 'loggedin' in session:
 
-        return render_template("display.html", account=account)
-    return redirect(url_for('login'))
+        # return render_template("display.html", account=account)
+        return redirect(url_for('login'))
 
 
 if __name__ == "__main__":
