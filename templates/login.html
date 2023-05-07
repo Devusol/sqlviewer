@@ -16,7 +16,7 @@
 
 		<div class="p-5 mb-4 bg-light rounded-3">
 			<div class="container-fluid py-5">
-				<h1 class="display-5 fw-bold text-center">Bloom Alerts Contest Admin</h1>
+				<h1 class="display-5 fw-bold text-center">SQL Viewer Admin</h1>
 
 				<form id="form-signin" action="/login" method="POST" autocomplete="off">
 					<div class="msg">{{ msg }}</div>
@@ -26,12 +26,27 @@
 					<label for="pword" class="sr-only"> Password</label>
 					<input type="password" name="pword" id="pword" class="form-control"
 						placeholder="Contact DEVUSOL for password" required />
-						<label for="dbselect" class="sr-only"> Select Database to View</label>
+					<label for="dbselect" class="sr-only"> Select Database to View</label>
 					<select name="dbselect" id="dbselect" class="form-control" required>
 						<option value="bloom">Bloom Alerts</option>
 						<option value="contest">Contestants</option>
 					</select>
 
+					<h1 class="display-5 fw-bold text-center">Database Connection</h1>
+
+					<label for="dbcon" class="sr-only"> Host</label>
+					<input type="text" name="dbconnection" id="dbcon" class="form-control"
+						placeholder="connection url" required />
+					<label for="pword" class="sr-only"> DB Password</label>
+					<input type="password" name="dbpword" id="pword" class="form-control"
+						placeholder="Database password" required />
+						<label for="pword" class="sr-only"> DB User</label>
+					<input type="text" name="dbuser" id="pword" class="form-control"
+						placeholder="Database user" required />
+						<label for="dbcon" class="sr-only"> DB Name</label>
+					<input type="text" name="dbname" id="dbname" class="form-control"
+						placeholder="DB name" required />
+					
 					<button class="btn btn-lg btn-primary btn-block mt-3" type="submit">
 						Log in
 					</button>
