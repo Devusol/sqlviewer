@@ -16,12 +16,12 @@ load_dotenv('.env')
 
 
 app = Flask(__name__)
-conn = pymysql.connect(
-    user=os.environ.get('MYSQL_DATABASE_USER'),
-    password=os.environ.get('MYSQL_DATABASE_PASSWORD'),
-    database=os.environ.get('MYSQL_DATABASE_DB'),
-    host=os.environ.get('MYSQL_DATABASE_HOST')
-)
+# conn = pymysql.connect(
+#     user=os.environ.get('MYSQL_DATABASE_USER'),
+#     password=os.environ.get('MYSQL_DATABASE_PASSWORD'),
+#     database=os.environ.get('MYSQL_DATABASE_DB'),
+#     host=os.environ.get('MYSQL_DATABASE_HOST')
+# )
 
 # https://planetscale.com/blog/connect-to-a-mysql-database-in-python
 
@@ -225,6 +225,7 @@ def tulip_post():
 @app.route("/")
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+
     msg = ''
     if request.method == 'POST' and 'uname' in request.form and 'pword' in request.form:
         _username = request.form['uname']
@@ -236,9 +237,16 @@ def login():
         _dbUser = request.form['dbuser']
         _dbName = request.form['dbname']
 
-        print("db host: ", _hostDB)
+        # print("db host: ", _hostDB)
 
-        conn.ping(reconnect=True)
+        conn = pymysql.connect(
+            user=_dbUser,
+            password=_dbPass,
+            database=_dbName,
+            host=_hostDB
+        )
+
+        # conn.ping(reconnect=True)
         cursor = conn.cursor(cursor=pymysql.cursors.DictCursor)
 
         cursor.execute(
