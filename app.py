@@ -1,72 +1,86 @@
+import pymysql.cursors
 import datetime
-import smugmug
 import threading
 import emailer
+import pymysql
 from flask import Flask, render_template, request, json, redirect, session, url_for
-from flaskext.mysql import MySQL
+# from flaskext.mysql import MySQL
 from werkzeug.security import generate_password_hash
 from dotenv import load_dotenv
 import os
-load_dotenv('.env') 
+load_dotenv('.env')
 
-print(os.environ.get('MYSQL_DATABASE_USER'))
-import pymysql.cursors
+# print(os.environ.get('MYSQL_DATABASE_USER'))
 
-
-mysql = MySQL()
+# mysql = MySQL()
 
 
 app = Flask(__name__)
+conn = pymysql.connect(
+    user=os.environ.get('MYSQL_DATABASE_USER'),
+    password=os.environ.get('MYSQL_DATABASE_PASSWORD'),
+    database=os.environ.get('MYSQL_DATABASE_DB'),
+    host=os.environ.get('MYSQL_DATABASE_HOST')
+)
 
-app.config['MYSQL_DATABASE_USER'] = os.environ.get('MYSQL_DATABASE_USER')
-app.config['MYSQL_DATABASE_PASSWORD'] = os.environ.get('MYSQL_DATABASE_PASSWORD')
-app.config['MYSQL_DATABASE_DB'] = os.environ.get('MYSQL_DATABASE_DB')
-app.config['MYSQL_DATABASE_HOST'] = os.environ.get('MYSQL_DATABASE_HOST')
-app.config['MYSQL_USE_POOL'] = {
-    "use": 0,
-    "size": 10,
-    "name": "local",
-}
+# https://planetscale.com/blog/connect-to-a-mysql-database-in-python
 
-app.secret_key=os.environ.get('APP_SECRET_KEY')
+# app.config['MYSQL_USE_POOL'] = {
+#     "use": 0,
+#     "size": 10,
+#     "name": "local",
+# }
 
-mysql.init_app(app)
+# app.config['MYSQL_DATABASE_USER'] = os.environ.get('MYSQL_DATABASE_USER')
+# app.config['MYSQL_DATABASE_PASSWORD'] = os.environ.get(
+#     'MYSQL_DATABASE_PASSWORD')
+# app.config['MYSQL_DATABASE_DB'] = os.environ.get('MYSQL_DATABASE_DB')
+# app.config['MYSQL_DATABASE_HOST'] = os.environ.get('MYSQL_DATABASE_HOST')
+# app.config['MYSQL_USE_POOL'] = {
+#     "use": 0,
+#     "size": 10,
+#     "name": "local",
+# }
 
-conn = mysql.connect()
-cursor = conn.cursor()
+app.secret_key = os.environ.get('APP_SECRET_KEY')
 
-cursor.execute("CREATE TABLE IF NOT EXISTS ContestEntries ( \
-                id INT AUTO_INCREMENT PRIMARY KEY, \
-                timestamp DATETIME NULL DEFAULT CURRENT_TIMESTAMP(), \
-                firstname VARCHAR(255), \
-                lastname VARCHAR(255), \
-                email VARCHAR(255), \
-                phone VARCHAR(50), \
-                address1 VARCHAR(255), \
-                address2 VARCHAR(255), \
-                city VARCHAR(50), \
-                state VARCHAR(50), \
-                zip VARCHAR(50), \
-                contest VARCHAR(50), \
-                files TEXT, \
-                agreedTOS BIT \
-                )")
+# mysql.init_app(app)
 
-cursor.execute("CREATE TABLE IF NOT EXISTS BloomAlerts ( \
-                id INT AUTO_INCREMENT PRIMARY KEY, \
-                timestamp DATETIME NULL DEFAULT CURRENT_TIMESTAMP(), \
-                firstname VARCHAR(255), \
-                lastname VARCHAR(255), \
-                email VARCHAR(255)\
-                )")
+# conn = mysql.connect()
+# cursor = conn.cursor()
 
-cursor.execute("CREATE TABLE IF NOT EXISTS Admins ( \
-                id INT AUTO_INCREMENT PRIMARY KEY, \
-                username VARCHAR(255), \
-                password VARCHAR(255) \
-                )")
+# cursor.execute("CREATE TABLE IF NOT EXISTS ContestEntries ( \
+#                 id INT AUTO_INCREMENT PRIMARY KEY, \
+#                 timestamp DATETIME NULL DEFAULT CURRENT_TIMESTAMP(), \
+#                 firstname VARCHAR(255), \
+#                 lastname VARCHAR(255), \
+#                 email VARCHAR(255), \
+#                 phone VARCHAR(50), \
+#                 address1 VARCHAR(255), \
+#                 address2 VARCHAR(255), \
+#                 city VARCHAR(50), \
+#                 state VARCHAR(50), \
+#                 zip VARCHAR(50), \
+#                 contest VARCHAR(50), \
+#                 files TEXT, \
+#                 agreedTOS BIT \
+#                 )")
 
-cursor.close()
+# cursor.execute("CREATE TABLE IF NOT EXISTS BloomAlerts ( \
+#                 id INT AUTO_INCREMENT PRIMARY KEY, \
+#                 timestamp DATETIME NULL DEFAULT CURRENT_TIMESTAMP(), \
+#                 firstname VARCHAR(255), \
+#                 lastname VARCHAR(255), \
+#                 email VARCHAR(255)\
+#                 )")
+
+# cursor.execute("CREATE TABLE IF NOT EXISTS Admins ( \
+#                 id INT AUTO_INCREMENT PRIMARY KEY, \
+#                 username VARCHAR(255), \
+#                 password VARCHAR(255) \
+#                 )")
+
+# cursor.close()
 
 
 @app.route('/emailertest')
@@ -193,13 +207,10 @@ def tulip_post():
             json.dumps({'message': 'User created successfully !'})
             cursor.close()
 
-            smugThread = threading.Thread(daemon=True, target=smugmug.upload_image, kwargs={
-                'image_paths': request.args.get('image_paths', _filepaths)})
             emailThread = threading.Thread(daemon=True, target=emailer.sendIt, kwargs={
                 'message': request.args.get('message', f"Contestant: {_firstname}_{_lastname}\nPhotos submitted: {_filenames}")})
 
             emailThread.start()
-            smugThread.start()
 
             return redirect(_redirect)
 
@@ -212,9 +223,6 @@ def tulip_post():
 
 
 @app.route("/")
-# def index():
-#     # return "Hello from index route"
-#     return redirect('https://whitechapelcemetery.com/tulip-festival.php')
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     msg = ''
@@ -222,6 +230,13 @@ def login():
         _username = request.form['uname']
         _password = request.form['pword']
         _selection = request.form['dbselect']
+
+        _hostDB = request.form['dbconnection']
+        _dbPass = request.form['dbpword']
+        _dbUser = request.form['dbuser']
+        _dbName = request.form['dbname']
+
+        print("db host: ", _hostDB)
 
         conn.ping(reconnect=True)
         cursor = conn.cursor(cursor=pymysql.cursors.DictCursor)
@@ -239,9 +254,11 @@ def login():
             session['username'] = account['username']
 
             if _selection == 'bloom':
-                cursor.execute('SELECT `timestamp`,  `firstname`,  `lastname`,  `email` FROM BloomAlerts')
+                cursor.execute(
+                    'SELECT `timestamp`,  `firstname`,  `lastname`,  `email` FROM BloomAlerts')
             else:
-                cursor.execute('SELECT `timestamp`,  `firstname`,  `lastname`,  `email`,  `phone`,  `address1`,  `address2`,  `city`,  `state`,  `zip`,  `contest` FROM ContestEntries')
+                cursor.execute(
+                    'SELECT `timestamp`,  `firstname`,  `lastname`,  `email`,  `phone`,  `address1`,  `address2`,  `city`,  `state`,  `zip`,  `contest` FROM ContestEntries')
 
             _data = cursor.fetchall()
             print(_data)
